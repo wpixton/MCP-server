@@ -20,7 +20,7 @@ So I wrote those rules once in Python, tested them, and exposed them as **domain
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TD
     User([You]) --> Desktop[Claude Desktop]
     Skill[["Agent Skill<br/>monthly-budget-review"]] -. how to use the tools .-> Desktop
     Desktop <-- "MCP: JSON-RPC over stdin/stdout" --> Server["server.py<br/>8 tools + instructions"]
