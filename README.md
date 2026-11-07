@@ -6,8 +6,9 @@ Ask Claude *"Was I over budget on anything in October?"* and it calls `budget_st
 
 > **All data in this repository is fictional.** The sample tracker, the example review, and every number in this README come from a generated fake workbook. My real spreadsheet, its ID and my Google credentials are never stored in the repo.
 
-> 📸 **Screenshot placeholder:** Claude Desktop answering *"How did I do in October 2026?"* by calling several `finance-tracker` tools.
-<!-- Take this screenshot with FINANCE_SHEET_ID removed from the Claude Desktop config, so it shows the fake sample. Save it as docs/images/claude-desktop-demo.png and replace this placeholder with: ![Claude Desktop using the finance-tracker tools](docs/images/claude-desktop-demo.png) -->
+![Claude Desktop answering "How did I do in October 2026?" by calling the month_summary, budget_status and spending_by_category tools](docs/images/claude-desktop-demo.png)
+
+*Claude Desktop answering "How did I do in October 2026?" On its own, it chose three `finance-tracker` tools and combined their results. (Fictional sample data.)*
 
 ---
 
