@@ -56,8 +56,8 @@ FAKE_ACCOUNTS = [
     (CREDIT_CARD, "Credit card", -340.00, "Negative"),
 ]
 
-FAKE_BUDGETS = {  # monthly targets, round numbers
-    "Housing": 500, "Food": 300, "Transportation": 120, "School": 50, "Entertainment": 60,
+FAKE_BUDGETS = {  # monthly targets, round numbers. School has none set (0), like real trackers often do.
+    "Housing": 500, "Food": 300, "Transportation": 120, "School": 0, "Entertainment": 60,
     "Subscriptions": 25, "Shopping": 100, "Giving": 150, "Other": 75,
 }
 

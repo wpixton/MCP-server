@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: full-review-of-a-complete-month
+expected_outcome: |
+  A budget review of October 2026 built from all six read tools, following the skill's template, with every number taken from the tool results.
