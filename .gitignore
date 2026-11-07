@@ -1,0 +1,22 @@
+# --- Python ---
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# --- Excel workbooks ---
+# Never commit real key logs (they contain names, BYU IDs, and phone numbers).
+# Ignore every .xlsx file...
+*.xlsx
+# ...except the generated FAKE sample workbook.
+!sample_data/sample_key_checkout.xlsx
+
+# Excel creates "~$name.xlsx" lock files while a workbook is open
+~$*
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

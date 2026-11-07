@@ -1,0 +1,25 @@
+[project]
+name = "helaman-key-mcp"
+version = "0.1.0"
+description = "MCP server that lets Claude read and update the Helaman Halls maintenance key checkout log (an Excel workbook)."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=2,<3",  # official MCP Python SDK. v2 renamed FastMCP -> MCPServer. [cli] adds the `mcp dev` inspector.
+    "openpyxl>=3.1",   # reads/writes .xlsx files
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["key_checkout"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
