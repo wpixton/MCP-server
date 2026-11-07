@@ -243,8 +243,8 @@ TITLE_FONT = Font(bold=True, size=14)
 HEADER_FONT = Font(bold=True, color="FFFFFF")
 HEADER_FILL = PatternFill("solid", fgColor="1F3864")
 WRAP = Alignment(wrap_text=True, vertical="top")
-DATE_FORMAT = "mmm d, yyyy"
-MONEY_FORMAT = '"$"#,##0.00'
+DATE_FORMAT = layout.DATE_FORMAT
+MONEY_FORMAT = layout.MONEY_FORMAT
 SIGNED_MONEY_FORMAT = '"$"#,##0.00;[Red]"-$"#,##0.00'
 PERCENT_FORMAT = "0%"
 
@@ -323,7 +323,7 @@ def add_income(wb: Workbook, income: list[dict]) -> None:
     for r in range(INCOME.first_data_row, last_row + 1):
         if r >= next_row:
             ws[f"F{r}"] = False
-        ws[f"E{r}"] = f'=IF(OR(D{r}="",C{r}="Transfer"),"",D{r}*Categories!$D$4)'
+        ws[f"E{r}"] = layout.INCOME_TITHING_FORMULA.format(r=r)
     set_format(ws, "AG", INCOME.first_data_row, last_row, DATE_FORMAT)
     set_format(ws, "DE", INCOME.first_data_row, last_row, MONEY_FORMAT)
     dropdown(ws, f"C3:C{layout.LAST_ROW}", CATEGORY_RANGE["income"])
@@ -335,7 +335,7 @@ def add_expenses(wb: Workbook, expenses: list[dict]) -> None:
     write_headers(ws, EXPENSES)
     next_row = write_rows(ws, EXPENSES, expenses)
     for r in range(EXPENSES.first_data_row, next_row):
-        ws[f"G{r}"] = f'=IF(A{r}="","",TEXT(A{r},"yyyy-mm"))'
+        ws[f"G{r}"] = layout.EXPENSES_MONTH_FORMULA.format(r=r)
     set_format(ws, "A", EXPENSES.first_data_row, next_row, DATE_FORMAT)
     set_format(ws, "D", EXPENSES.first_data_row, next_row, MONEY_FORMAT)
     dropdown(ws, f"C3:C{layout.LAST_ROW}", CATEGORY_RANGE["expense"])

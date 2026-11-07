@@ -1,4 +1,4 @@
-"""Tests for the Google sign-in logic. None of these touch the network."""
+﻿"""Tests for the Google sign-in logic. None of these touch the network."""
 
 import json
 
@@ -19,7 +19,7 @@ def write_fake_token(expiry: str) -> None:
         "client_id": "fake-client.apps.googleusercontent.com",
         "client_secret": "fake-secret",
         "token_uri": "https://oauth2.googleapis.com/token",
-        "scopes": google_sheets.SCOPES,
+        "scopes": google_sheets.READ_SCOPES,
         "expiry": expiry,
     }))
 
@@ -53,11 +53,23 @@ def test_expired_sign_in_gives_a_clear_error(monkeypatch):
 
 
 def test_permission_is_read_only():
-    assert google_sheets.SCOPES == ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    assert google_sheets.READ_SCOPES == ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+
+
+def test_read_only_sign_in_never_grants_writing():
+    # Signed in read-only, asking for write access must still fail -- it needs its own sign-in.
+    write_fake_token(expiry="2099-01-01T00:00:00Z")
+    with pytest.raises(google_sheets.SetupError, match="--allow-writes"):
+        google_sheets.get_credentials(interactive=False, write=True)
+
+
+def test_write_sign_in_uses_its_own_token_file():
+    assert config.write_token_file() != config.token_file()
+    assert config.write_token_file().parent == config.token_file().parent
 
 
 def test_check_connection_requires_a_sheet_id(capsys):
-    assert check_connection.main() == 1
+    assert check_connection.main([]) == 1
     assert config.SHEET_ID_VAR in capsys.readouterr().out
 
 

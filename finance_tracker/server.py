@@ -1,4 +1,7 @@
-"""The MCP server: read-only tools that understand William's budget.
+"""The MCP server: tools that understand William's budget.
+
+Seven read-only tools, plus add_transaction, the only one that changes anything
+(it adds one row; it never edits or deletes).
 
 Claude Desktop starts it like this and talks to it over stdin/stdout:
     python -m finance_tracker.server
@@ -24,8 +27,9 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
-from . import reports
+from . import reports, writer
 from .google_sheets import SetupError
+from .sources import WritesNotAllowed, open_source
 from .tracker import Month, Tracker, load_tracker
 
 INSTRUCTIONS = """\
@@ -35,12 +39,16 @@ Tools for William's personal finance tracker (a Google Sheet with Income, Expens
   as income or spending.
 - Budgets are one monthly target per expense category.
 - Tithing is 10% of income (except transfers); the Income tab records whether each entry's tithing is paid.
-Prefer these tools over reading the spreadsheet cell by cell: they apply the tracker's rules for you."""
+Prefer these tools over reading the spreadsheet cell by cell: they apply the tracker's rules for you.
+add_transaction is the only tool that changes anything. Use it only when the user asks to record a
+transaction, and confirm unclear details with them first."""
 
 server = MCPServer(name="finance-tracker", instructions=INSTRUCTIONS)
 
-# All of these tools only read. Clients can use this hint to call them without extra confirmation.
+# The read tools only read. Clients can use this hint to call them without extra confirmation.
 READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False)
+# add_transaction changes the sheet, but only by adding a row -- it never edits or deletes.
+ADDS_A_ROW = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 
 # Reusable parameter types. The description text is what Claude sees for each argument.
 MonthArg = Annotated[str | None, Field(description='Month as YYYY-MM, e.g. "2026-10". Leave empty for the current month.')]
@@ -171,6 +179,69 @@ def tithing_status(
     Use for "Am I caught up on tithing?" or "How much tithing do I still owe?".
     """
     return reports.tithing_status(get_tracker(), year or today().year)
+
+
+@server.tool(annotations=ADDS_A_ROW)
+def add_transaction(
+    kind: Annotated[Literal["expense", "income"], Field(
+        description='"expense" for money spent, "income" for money received.')],
+    description: Annotated[str, Field(description='What it was, e.g. "Grocery store" or "Campus job paycheck".')],
+    amount: Annotated[float, Field(description="Dollar amount, always positive (kind says which direction), e.g. 12.50.")],
+    category: Annotated[str, Field(
+        description='A category from the tracker, e.g. "Food" for expenses or "Job" for income. '
+                    "An invalid one returns the list of valid categories.")],
+    date: Annotated[str | None, Field(description="Date as YYYY-MM-DD. Leave empty for today. Can't be in the future.")] = None,
+    account: Annotated[str | None, Field(
+        description="Expenses only: which account paid, as named on the Accounts tab. Optional.")] = None,
+    notes: Annotated[str | None, Field(description="Optional note.")] = None,
+    allow_duplicate: Annotated[bool, Field(
+        description="Set true only if the user confirms they really want a second identical entry.")] = False,
+) -> dict:
+    """Add ONE income or expense entry to the tracker (a new row on the Income or Expenses tab).
+
+    Only call this when the user clearly asks to add or record a transaction. If the amount, category or
+    date is unclear, ask the user first instead of guessing. It refuses invalid categories, non-positive
+    amounts, future dates, and an exact duplicate of an existing entry (same date, amount and description)
+    unless allow_duplicate is true. After writing, it reads the row back to confirm, and for expenses it
+    reports where that category's budget stands this month.
+
+    Use for "Add a $12 Food expense from today" or "Record my $600 paycheck from Friday".
+    It writes to the fake sample workbook unless writing to the real Google Sheet has been switched on.
+    """
+    try:
+        source = open_source(for_writing=True)  # refuses the real sheet unless writes are allowed
+        tracker = load_tracker(source)
+        entry = writer.validate(tracker, kind, description, amount, category, date, account, notes, today())
+        duplicate = writer.find_duplicate(tracker, entry)
+        if duplicate and not allow_duplicate:
+            raise writer.InvalidTransaction(
+                f"This looks like a duplicate of {duplicate.kind} row {duplicate.row} "
+                f"({duplicate.date}, {duplicate.description}, ${duplicate.amount}). "
+                "Nothing was added. Call again with allow_duplicate=true only if the user confirms.")
+        saved = writer.write_transaction(source, entry)
+        reloaded = load_tracker(source)  # one read-back, used to verify and for the budget summary
+        verified = writer.verify(reloaded, saved)
+    except (writer.InvalidTransaction, WritesNotAllowed, SetupError, FileNotFoundError) as error:
+        raise ToolError(str(error)) from error
+    except PermissionError as error:
+        raise ToolError("Couldn't save: the workbook is open in Excel (or another program). "
+                        "Close it and try again. Nothing was added.") from error
+
+    result = {
+        "added": reports.transaction_dict(saved),
+        "tab": "Income" if saved.kind == "income" else "Expenses",
+        "row": saved.row,
+        "written_to": source.describe(),
+        "verified": verified,
+    }
+    if saved.kind == "expense" and saved.category in reloaded.budgets:
+        lines = reloaded.budget_lines(Month.of(saved.date))
+        line = next(budget_line for budget_line in lines if budget_line.category == saved.category)
+        result["budget_this_month"] = {
+            "category": line.category, "budget": float(line.budget), "spent": float(line.actual),
+            "remaining": float(line.remaining), "status": line.status,
+        }
+    return result
 
 
 def main() -> None:

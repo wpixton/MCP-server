@@ -49,6 +49,20 @@ Sign in to all of these with **the Google account that owns the tracker**.
    ```
    A browser opens. Pick your account. For an External app you'll see **"Google hasn't verified this app."** That's expected for your own app in Testing mode, so click **Continue**. Approve **"See all your Google Sheets spreadsheets"** (read-only). The terminal then prints the tracker's tab names and sizes. No cell values are downloaded.
 
+## Optional: let `add_transaction` write to the real sheet
+
+By default `add_transaction` only writes to the fake sample. Writing to your real sheet takes two deliberate steps, so it can't happen by accident:
+
+1. **A separate sign-in with edit permission.** Run this once and approve **"See, edit, create, and delete all your Google Sheets spreadsheets"**:
+   ```powershell
+   .\.venv\Scripts\python.exe -m finance_tracker.check_connection --allow-writes
+   ```
+   It's saved as `token_write.json`, next to the read-only `token.json`. The read tools keep using the read-only one.
+2. **Switch writes on** wherever the server runs, e.g. in the Claude Desktop config's `env` section:
+   `"FINANCE_ALLOW_REAL_WRITES": "yes"`
+
+To turn writing off again, remove that setting or delete `token_write.json`. Either one is enough.
+
 ## Things to know
 
 - **External apps only: the sign-in expires after 7 days in Testing mode.** That's Google's rule for apps that aren't published. When it happens, the server says "the sign-in expired," and you run step 7 again. To avoid this, you can set the app to **In production** under Audience. For a personal app with one user, that only means you'll keep seeing the "unverified app" screen when you sign in.

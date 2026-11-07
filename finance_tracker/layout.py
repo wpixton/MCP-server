@@ -141,6 +141,14 @@ NET_WORTH_HISTORY = Table(NET_WORTH_SHEET, header_row=9, columns=(
     ("D", "Net Worth", "net_worth"),
 ))
 
+# Formulas a new row needs, copied from the real sheet. {r} is the row number.
+INCOME_TITHING_FORMULA = '=IF(OR(D{r}="",C{r}="Transfer"),"",D{r}*Categories!$D$4)'
+EXPENSES_MONTH_FORMULA = '=IF(A{r}="","",TEXT(A{r},"yyyy-mm"))'
+
+# Cell formats used by the sheet.
+DATE_FORMAT = "mmm d, yyyy"
+MONEY_FORMAT = '"$"#,##0.00'
+
 # --- Settings tab ---
 SETTINGS_HEADER_ROW = 7
 SETTINGS_FIRST_ROW = 8

@@ -7,6 +7,9 @@ FINANCE_SAMPLE_PATH      Optional: use a different fake .xlsx (the tests do this
 FINANCE_CREDENTIALS_DIR  Optional: where the Google sign-in files live.
                          Default: a folder in your home directory, outside the repo,
                          so they can never be committed by accident.
+FINANCE_ALLOW_REAL_WRITES  Must be "yes" before add_transaction may write to the
+                         real Google Sheet. Anything else (or unset) = refuse.
+                         Writes to the fake sample are always allowed.
 """
 
 import os
@@ -20,6 +23,7 @@ DEFAULT_CREDENTIALS_DIR = Path.home() / ".finance-tracker-mcp"
 SHEET_ID_VAR = "FINANCE_SHEET_ID"
 SAMPLE_PATH_VAR = "FINANCE_SAMPLE_PATH"
 CREDENTIALS_DIR_VAR = "FINANCE_CREDENTIALS_DIR"
+ALLOW_WRITES_VAR = "FINANCE_ALLOW_REAL_WRITES"
 
 
 def _read_env(name: str) -> str | None:
@@ -61,5 +65,15 @@ def client_secret_file() -> Path:
 
 
 def token_file() -> Path:
-    """Saved after you sign in once, so later runs don't need the browser."""
+    """Saved after you sign in once, so later runs don't need the browser. Read-only."""
     return credentials_dir() / "token.json"
+
+
+def write_token_file() -> Path:
+    """A separate sign-in that may edit the sheet. Only created if you ask for it."""
+    return credentials_dir() / "token_write.json"
+
+
+def real_writes_allowed() -> bool:
+    """True only when FINANCE_ALLOW_REAL_WRITES is explicitly yes/true/1."""
+    return (_read_env(ALLOW_WRITES_VAR) or "").lower() in ("yes", "true", "1")

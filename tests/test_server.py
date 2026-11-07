@@ -1,4 +1,4 @@
-"""Tests for server.py, through a real MCP client.
+﻿"""Tests for server.py, through a real MCP client.
 
 Most tests connect the client to the server in memory (fast). The last one
 starts `python -m finance_tracker.server` as a separate process and talks to it
@@ -17,8 +17,9 @@ from mcp.client.stdio import StdioServerParameters
 from finance_tracker import config, server
 from finance_tracker.sample_tracker import build_sample_tracker
 
-TOOLS = {"month_summary", "budget_status", "spending_by_category", "compare_months",
-         "biggest_expenses", "recent_transactions", "tithing_status"}
+READ_TOOLS = {"month_summary", "budget_status", "spending_by_category", "compare_months",
+              "biggest_expenses", "recent_transactions", "tithing_status"}
+TOOLS = READ_TOOLS | {"add_transaction"}
 
 
 @pytest.fixture(scope="module")
@@ -57,10 +58,12 @@ def error_text(result) -> str:
 
 # --- What Claude sees -------------------------------------------------------
 
-def test_all_tools_are_listed_and_marked_read_only():
+def test_all_tools_are_listed_and_only_add_transaction_writes():
     tools = connect_and(lambda client: client.list_tools()).tools
     assert {t.name for t in tools} == TOOLS
-    assert all(t.annotations.read_only_hint for t in tools)
+    for tool in tools:
+        assert tool.annotations.read_only_hint is (tool.name in READ_TOOLS), tool.name
+        assert tool.annotations.destructive_hint is False, tool.name  # nothing ever deletes or overwrites
 
 
 def test_every_tool_says_when_to_use_it():
