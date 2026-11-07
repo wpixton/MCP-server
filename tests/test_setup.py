@@ -1,15 +1,12 @@
-"""Smoke test: proves the environment is set up and the key libraries import.
-
-This file gets replaced by real tests in milestone 3.
-"""
+"""Smoke test: proves the environment is set up and the key libraries import."""
 
 
 def test_libraries_import():
+    import googleapiclient.discovery
+    import google_auth_oauthlib.flow
     import openpyxl
     from mcp.server.mcpserver import MCPServer  # called FastMCP in mcp v1
 
-    import key_checkout
+    import finance_tracker
 
-    assert openpyxl is not None
-    assert MCPServer is not None
-    assert key_checkout is not None
+    assert all([googleapiclient.discovery, google_auth_oauthlib.flow, openpyxl, MCPServer, finance_tracker])

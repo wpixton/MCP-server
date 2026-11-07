@@ -1,12 +1,15 @@
 [project]
-name = "helaman-key-mcp"
+name = "finance-tracker-mcp"
 version = "0.1.0"
-description = "MCP server that lets Claude read and update the Helaman Halls maintenance key checkout log (an Excel workbook)."
+description = "MCP server that gives Claude budget-aware tools for a personal finance tracker in Google Sheets."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=2,<3",  # official MCP Python SDK. v2 renamed FastMCP -> MCPServer. [cli] adds the `mcp dev` inspector.
-    "openpyxl>=3.1",   # reads/writes .xlsx files
+    "mcp[cli]>=2,<3",                  # official MCP Python SDK. v2 renamed FastMCP -> MCPServer.
+    "openpyxl>=3.1",                   # reads/writes the fake sample tracker (.xlsx)
+    "google-api-python-client>=2.100", # talks to the Google Sheets API
+    "google-auth>=2.20",               # holds and refreshes Google credentials
+    "google-auth-oauthlib>=1.0",       # the one-time "sign in with Google" browser flow
 ]
 
 [project.optional-dependencies]
@@ -19,7 +22,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["key_checkout"]
+packages = ["finance_tracker"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

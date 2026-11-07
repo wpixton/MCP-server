@@ -5,14 +5,34 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# --- Excel workbooks ---
-# Never commit real key logs (they contain names, BYU IDs, and phone numbers).
-# Ignore every .xlsx file...
-*.xlsx
-# ...except the generated FAKE sample workbook.
-!sample_data/sample_key_checkout.xlsx
+# --- Secrets: never commit ---
+# Google OAuth files normally live OUTSIDE the repo (~/.finance-tracker-mcp/),
+# so git never sees them. These rules are a second line of defense in case one
+# gets copied in by accident.
+credentials.json
+client_secret*.json
+token.json
+*token*.json
+service-account*.json
+.env
+.env.*
+*.pem
+*.key
 
-# Excel creates "~$name.xlsx" lock files while a workbook is open
+# --- Real financial data: never commit ---
+# Spreadsheet files and exports could contain real amounts, balances or payees.
+# Ignore all of them...
+*.xlsx
+*.xls
+*.xlsm
+*.ods
+*.csv
+exports/
+private/
+# ...except the generated FAKE sample tracker.
+!sample_data/sample_finance_tracker.xlsx
+
+# Office lock files ("~$name.xlsx") created while a workbook is open
 ~$*
 
 # --- Editors / OS ---
